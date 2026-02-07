@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase';
 import { UserButton } from '@clerk/nextjs';
+import { Film } from 'lucide-react';
 import { AdCard } from '@/components/AdCard';
 
 export default async function Home() {
@@ -41,7 +42,15 @@ export default async function Home() {
           ))}
         </div>
         {ads.length === 0 && (
-          <p className="text-center text-slate-500">No ads in the library yet.</p>
+          <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">
+            <div className="rounded-full border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+              <Film className="h-12 w-12 text-slate-500" strokeWidth={1.25} />
+            </div>
+            <p className="text-lg font-medium text-slate-400">No ads found</p>
+            <p className="max-w-sm text-sm text-slate-500">
+              Ingest ads from the Ad Library to see them here.
+            </p>
+          </div>
         )}
       </main>
     </div>
