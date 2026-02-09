@@ -8,6 +8,17 @@ function formatLabel(value: Ad['format']): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+function getDisplayBrand(ad: Ad): { label: string; isFallback: boolean } {
+  const raw = (ad.brand_name ?? '').trim();
+  const isUnknown =
+    !raw || raw.toLowerCase() === 'unknown brand' || raw.toLowerCase() === 'unknown';
+  if (isUnknown) {
+    const fallback = (ad.industry ?? 'Ad').trim() || 'Ad';
+    return { label: fallback, isFallback: true };
+  }
+  return { label: raw, isFallback: false };
+}
+
 function isVideoAd(ad: Ad): boolean {
   return ad.format === 'video' || ad.media_url?.endsWith('.mp4') || ad.media_url?.includes('video');
 }
@@ -32,6 +43,7 @@ export function AdCard({ ad, onSelect }: { ad: Ad; onSelect?: () => void }) {
 
   const showVideo = isVideoAd(ad);
   const posterUrl = ad.thumbnail_url || ad.media_url;
+  const { label: displayBrand, isFallback: isBrandFallback } = getDisplayBrand(ad);
 
   return (
     <motion.article
@@ -62,7 +74,7 @@ export function AdCard({ ad, onSelect }: { ad: Ad; onSelect?: () => void }) {
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={ad.media_url}
-            alt={ad.headline || ad.brand_name}
+            alt={ad.headline || displayBrand}
             className="h-full w-full object-cover"
           />
         )}
@@ -87,7 +99,13 @@ export function AdCard({ ad, onSelect }: { ad: Ad; onSelect?: () => void }) {
 
       {/* Glass overlay: brand + headline */}
       <div className="absolute inset-x-0 bottom-0 bg-black/40 p-3 backdrop-blur-md">
-        <p className="font-medium text-white">{ad.brand_name}</p>
+        {isBrandFallback ? (
+          <span className="inline-block max-w-full truncate rounded px-1.5 py-0.5 text-xs font-medium text-slate-400">
+            {displayBrand}
+          </span>
+        ) : (
+          <p className="max-w-full truncate font-medium text-white">{displayBrand}</p>
+        )}
         <p className="mt-0.5 line-clamp-2 text-sm text-gray-300">
           {ad.headline || ad.primary_text}
         </p>

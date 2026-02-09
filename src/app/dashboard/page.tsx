@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { Suspense } from 'react';
 import { Bookmark } from 'lucide-react';
 import { fetchSavedAds } from '@/app/actions/fetchSavedAds';
+import { SuccessHandler } from '@/app/dashboard/SuccessHandler';
 import { VaultWithModal } from '@/app/dashboard/VaultWithModal';
 import { NavAuth } from '@/components/layout/NavAuth';
 import { auth } from '@clerk/nextjs/server';
@@ -15,6 +17,9 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
+      <Suspense fallback={null}>
+        <SuccessHandler />
+      </Suspense>
       <header className="sticky top-0 z-10 border-b border-white/10 bg-slate-950/80 px-4 py-5 backdrop-blur-md sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <div className="flex flex-col gap-1">
@@ -50,9 +55,9 @@ export default async function DashboardPage() {
             <p className="text-lg text-slate-400">Your vault is empty.</p>
             <Link
               href="/"
-              className="rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-medium text-white backdrop-blur-md transition hover:border-white/30 hover:bg-white/15"
+              className="cursor-pointer rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-medium text-white backdrop-blur-md transition hover:border-white/30 hover:bg-white/15"
             >
-              Browse the Library
+              Explore the Library
             </Link>
           </div>
         ) : (

@@ -233,7 +233,7 @@ async function run() {
     industry: 'Unknown',
   };
 
-  const { error: insertError } = await supabase.from('ads').insert(row);
+  const { error: insertError } = await supabase.from('ads').insert(row as any);
   if (insertError) {
     console.error('❌ Database insert failed:', insertError.message);
     process.exit(1);

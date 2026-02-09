@@ -8,6 +8,7 @@ import { useAuth, useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import type { Ad } from '@/types/supabase';
 import { createClerkSupabaseClient } from '@/lib/supabaseClient';
+import { PricingModal } from '@/components/pricing/PricingModal';
 
 /** Extended ad shape for insight modal (optional fields for future schema) */
 export type AdInsight = Ad & {
@@ -47,6 +48,9 @@ export function AdInsightModal({
   const { getToken } = useAuth();
   const router = useRouter();
   const [isSaved, setIsSaved] = useState(false);
+  const [showPricingModal, setShowPricingModal] = useState(false);
+
+  const isPro = user?.publicMetadata?.isPro === true;
 
   // Check saved status when modal opens and user is signed in
   useEffect(() => {
@@ -80,10 +84,18 @@ export function AdInsightModal({
     const token = await getToken({ template: 'supabase' });
     const supabaseWithAuth = createClerkSupabaseClient(token);
     const nextSaved = !isSaved;
-    setIsSaved(nextSaved); // optimistic
 
     if (nextSaved) {
       const userId = user?.id ?? '';
+      const { count } = await supabaseWithAuth
+        .from('saved_ads')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+      if (count !== null && count >= 3 && !isPro) {
+        setShowPricingModal(true);
+        return;
+      }
+      setIsSaved(true); // optimistic after limit check
       const { error } = await supabaseWithAuth
         .from('saved_ads')
         .insert({ user_id: userId, ad_id: ad.id });
@@ -98,6 +110,7 @@ export function AdInsightModal({
         toast.success('Ad saved to Vault');
       }
     } else {
+      setIsSaved(false); // optimistic for remove
       onRemovedFromVault?.(ad.id);
       const userId = user?.id ?? '';
       const { error } = await supabaseWithAuth
@@ -113,7 +126,7 @@ export function AdInsightModal({
         toast.success('Removed from Vault');
       }
     }
-  }, [ad, isSignedIn, isSaved, router, getToken, user?.id, onRemovedFromVault, onRestoreToVault]);
+  }, [ad, isSignedIn, isSaved, router, getToken, user?.id, onRemovedFromVault, onRestoreToVault, isPro]);
 
   if (!ad) return null;
 
@@ -122,8 +135,14 @@ export function AdInsightModal({
   const posterUrl = ad.thumbnail_url || ad.media_url;
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
+    <>
+      <PricingModal
+        open={showPricingModal}
+        onOpenChange={setShowPricingModal}
+        currentPlan="free"
+      />
+      <Dialog.Root open={open} onOpenChange={onOpenChange}>
+        <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <Dialog.Content
           className="fixed left-1/2 top-1/2 z-50 grid h-[85vh] w-full max-w-5xl -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-white/10 bg-slate-900/95 shadow-2xl backdrop-blur-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
@@ -245,5 +264,6 @@ export function AdInsightModal({
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
+    </>
   );
 }

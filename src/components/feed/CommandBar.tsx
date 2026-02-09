@@ -3,8 +3,8 @@
 import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Search } from 'lucide-react';
-import { useAuth, UserButton } from '@clerk/nextjs';
+import { Bookmark, Search } from 'lucide-react';
+import { useAuth, useUser, UserButton } from '@clerk/nextjs';
 
 const SMART_FILTERS = [
   'All',
@@ -35,6 +35,8 @@ export function CommandBar({
   const [internalFilter, setInternalFilter] = useState<SmartFilter>('All');
 
   const { isSignedIn } = useAuth();
+  const { user } = useUser();
+  const isPro = user?.publicMetadata?.isPro === true;
   const query = controlledSearch !== undefined ? controlledSearch : internalQuery;
   const activeFilter = controlledFilter !== undefined ? controlledFilter : internalFilter;
 
@@ -109,7 +111,7 @@ export function CommandBar({
 
         {/* Auth: Glass Sign In or UserButton */}
         <div className="h-6 w-px shrink-0 bg-white/10" aria-hidden />
-        <div className="flex shrink-0 items-center">
+        <div className="flex shrink-0 items-center gap-2">
           {!isSignedIn ? (
             <Link
               href="/sign-in"
@@ -118,12 +120,26 @@ export function CommandBar({
               Sign In
             </Link>
           ) : (
-            <UserButton
-              afterSignOutUrl="/"
-              appearance={{
-                elements: { avatarBox: 'h-8 w-8' },
-              }}
-            />
+            <>
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-2 rounded-full border border-white/5 bg-white/10 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-white/20"
+              >
+                <Bookmark className="h-4 w-4" aria-hidden />
+                My Vault
+                {isPro && (
+                  <span className="rounded-full bg-amber-400/90 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-900">
+                    PRO
+                  </span>
+                )}
+              </Link>
+              <UserButton
+                afterSignOutUrl="/"
+                appearance={{
+                  elements: { avatarBox: 'h-8 w-8' },
+                }}
+              />
+            </>
           )}
         </div>
       </div>
