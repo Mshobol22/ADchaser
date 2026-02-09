@@ -12,7 +12,7 @@ function isVideoAd(ad: Ad): boolean {
   return ad.format === 'video' || ad.media_url?.endsWith('.mp4') || ad.media_url?.includes('video');
 }
 
-export function AdCard({ ad }: { ad: Ad }) {
+export function AdCard({ ad, onSelect }: { ad: Ad; onSelect?: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const handleMouseEnter = useCallback(() => {
@@ -35,11 +35,15 @@ export function AdCard({ ad }: { ad: Ad }) {
 
   return (
     <motion.article
-      className="group relative overflow-hidden rounded-xl border border-white/10"
+      role={onSelect ? 'button' : undefined}
+      tabIndex={onSelect ? 0 : undefined}
+      className="group relative cursor-pointer overflow-hidden rounded-xl border border-white/10"
       whileHover={{ y: -2 }}
       transition={{ type: 'tween', duration: 0.2 }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onClick={onSelect}
+      onKeyDown={onSelect ? (e) => e.key === 'Enter' && onSelect() : undefined}
     >
       {/* Media: video (hover-to-play) or image */}
       <div className="relative aspect-[4/3] w-full bg-slate-800/50">
@@ -62,9 +66,23 @@ export function AdCard({ ad }: { ad: Ad }) {
             className="h-full w-full object-cover"
           />
         )}
-        <span className="absolute right-2 top-2 rounded-md border border-white/10 bg-black/40 px-2 py-0.5 text-xs font-medium text-white/90 backdrop-blur-sm">
+        {/* Top-right: Hook Score badge (glassmorphic); score > 8 = green */}
+        <span
+          className={`absolute right-2 top-2 rounded-md border border-white/10 bg-black/50 px-2 py-0.5 text-xs font-medium backdrop-blur-sm ${
+            (ad.hook_rating ?? 0) > 8 ? 'text-green-400' : 'text-white/90'
+          }`}
+        >
+          Hook {typeof ad.hook_rating === 'number' ? ad.hook_rating.toFixed(1) : '—'}
+        </span>
+        <span className="absolute right-2 top-8 rounded-md border border-white/10 bg-black/40 px-2 py-0.5 text-xs font-medium text-white/90 backdrop-blur-sm">
           {formatLabel(ad.format)}
         </span>
+        {/* Bottom-left of video overlay: industry tag */}
+        {ad.industry ? (
+          <span className="absolute bottom-2 left-2 rounded-md border border-white/10 bg-black/50 px-2 py-0.5 text-xs font-medium text-white/90 backdrop-blur-sm">
+            {ad.industry}
+          </span>
+        ) : null}
       </div>
 
       {/* Glass overlay: brand + headline */}

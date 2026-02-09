@@ -17,6 +17,13 @@ export interface Ad {
   industry: string;
 }
 
+export interface SavedAd {
+  id: string;
+  user_id: string;
+  ad_id: string;
+  created_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -24,6 +31,11 @@ export interface Database {
         Row: Ad;
         Insert: Omit<Ad, 'id' | 'created_at'> & { id?: string; created_at?: string };
         Update: Partial<Omit<Ad, 'id'>>;
+      };
+      saved_ads: {
+        Row: SavedAd;
+        Insert: Omit<SavedAd, 'id' | 'created_at'> & { id?: string; created_at?: string };
+        Update: Partial<Omit<SavedAd, 'id'>>;
       };
     };
   };
