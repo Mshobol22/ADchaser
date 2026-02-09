@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "tsx scripts/seed.ts",
-    "ingest": "tsx scripts/ingestor.ts"
+    "ingest": "tsx scripts/ingestor.ts",
+    "gen:types": "node scripts/gen-types.js"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.37.3",

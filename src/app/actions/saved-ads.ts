@@ -47,7 +47,9 @@ export async function saveAdToVault(adId: string): Promise<{ ok: boolean; error?
 
   const token = await getToken();
   const supabase = createServerClient(token ?? null);
-  const { error } = await supabase.from('saved_ads').insert({ user_id: userId, ad_id: adId });
+  const { error } = await supabase
+    .from('saved_ads')
+    .insert({ user_id: userId, ad_id: adId } as any);
 
   if (error) {
     if (error.code === '23505') return { ok: true }; // unique violation = already saved
