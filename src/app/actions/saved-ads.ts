@@ -23,7 +23,8 @@ export async function getSavedAds(): Promise<Ad[]> {
   const { data: ads } = await supabase.from('ads').select('*').in('id', adIds);
   const list = ads ?? [];
   const orderMap = new Map(adIds.map((id, i) => [id, i]));
-  return list.slice().sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
+  // Cast a and b to 'any' to fix the Vercel build error
+  return list.slice().sort((a: any, b: any) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
 }
 
 export async function checkSavedAd(adId: string): Promise<boolean> {
