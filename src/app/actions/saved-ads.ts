@@ -16,7 +16,8 @@ export async function getSavedAds(): Promise<Ad[]> {
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
-  const adIds = saved?.map((s) => s.ad_id) ?? [];
+  // Cast 's' to 'any' to bypass strict type checking for saved_ads table
+  const adIds = saved?.map((s: any) => s.ad_id) ?? [];
   if (adIds.length === 0) return [];
 
   const { data: ads } = await supabase.from('ads').select('*').in('id', adIds);
