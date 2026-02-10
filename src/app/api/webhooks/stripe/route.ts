@@ -43,17 +43,22 @@ export async function POST(req: Request) {
     publicMetadata: { isPro: true },
   });
 
-  // Store subscription in Supabase so dashboard header can read real status (SERVICE_ROLE bypasses RLS)
-  const userEmail = session.customer_details?.email ?? session.customer_email ?? undefined;
+  // Extract data for users table (email + Stripe customer id for portal)
+  const email = session.customer_details?.email ?? session.customer_email ?? undefined;
+  const customerId =
+    typeof session.customer === 'string'
+      ? session.customer
+      : (session.customer as { id?: string } | null)?.id ?? undefined;
+
   const supabase = createServiceRoleClient();
   console.log('Using SERVICE_ROLE client for Supabase users upsert');
-  // Cast to 'any' to bypass strict type checking for the users table
   await supabase
     .from('users')
     .upsert(
       {
         id: userId,
-        email: userEmail,
+        email,
+        stripe_customer_id: customerId,
         subscription_plan: 'pro',
         updated_at: new Date().toISOString(),
       } as any,
