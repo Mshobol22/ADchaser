@@ -5,9 +5,8 @@ config({ path: path.resolve(process.cwd(), '.env.local') });
 
 import { chromium } from 'playwright';
 import { createServiceRoleClient } from '../src/lib/supabase';
-import type { Database } from '../src/types/supabase';
-
-type AdInsert = Database['public']['Tables']['ads']['Insert'];
+// import type { Database } from '../src/types/supabase';
+// type AdInsert = Database['public']['Tables']['ads']['Insert'];
 
 const VIDEO_TIMEOUT_MS = 30_000;
 const AD_MEDIA_BUCKET = 'ad-media';
@@ -221,7 +220,7 @@ async function run() {
   const media_url = urlData.publicUrl;
   console.log('✅ Uploaded to Supabase:', media_url);
 
-  const row: AdInsert = {
+  const row: any = {
     brand_name,
     headline: headline || primary_text.slice(0, 100),
     primary_text: primary_text || headline,
