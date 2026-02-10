@@ -4,14 +4,13 @@ import path from 'path';
 config({ path: path.resolve(process.cwd(), '.env.local') });
 
 import { createServiceRoleClient } from '../src/lib/supabase';
-import type { Database } from '../src/types/supabase';
-
-type AdInsert = Database['public']['Tables']['ads']['Insert'];
+// import type { Database } from '../src/types/supabase';
+// type AdInsert = Database['public']['Tables']['ads']['Insert'];
 
 async function seed() {
   const supabase = createServiceRoleClient();
 
-  const ads: AdInsert[] = [
+  const ads: any[] = [
     {
       brand_name: 'Nike',
       headline: 'Just Do It — Run Your Day',
