@@ -1,18 +1,17 @@
 'use server';
 
 import { auth } from '@clerk/nextjs/server';
-import { createServerClient } from '@/lib/supabase';
+import { createServerClient, createServiceRoleClient } from '@/lib/supabase';
 import type { Ad } from '@/types/supabase';
 
 const SAVE_LIMIT_FREE = 3;
 
-/** Source of truth: subscription from Supabase users table (not Clerk). */
+/** Source of truth: subscription from Supabase users table (not Clerk). Uses service role so RLS cannot hide the row. */
 export async function getIsPro(): Promise<boolean> {
   const { getToken, userId } = await auth();
   if (!userId) return false;
-  const token = await getToken({ template: 'supabase' });
-  const supabase = createServerClient(token ?? null);
-  const { data } = await supabase
+  const supabaseAdmin = createServiceRoleClient();
+  const { data } = await supabaseAdmin
     .from('users')
     .select('subscription_plan')
     .eq('id', userId)
@@ -61,34 +60,36 @@ export async function checkSavedAd(adId: string): Promise<boolean> {
 }
 
 export async function saveAdToVault(adId: string): Promise<{ ok: boolean; error?: string }> {
+  // 1. Get the user (Clerk – this app does not use Supabase Auth)
   const { getToken, userId } = await auth();
-  if (!userId) return { ok: false, error: 'Not signed in' };
+  if (!userId) return { ok: false, error: 'Unauthorized' };
 
   const token = await getToken({ template: 'supabase' });
   const supabase = createServerClient(token ?? null);
 
-  // Enforce limit: source of truth is Supabase users.subscription_plan
-  const { data: userRow } = await supabase
+  // 2. Fetch the REAL plan from DB (service role so RLS cannot hide Pro status)
+  const supabaseAdmin = createServiceRoleClient();
+  const { data: dbUser } = await supabaseAdmin
     .from('users')
     .select('subscription_plan')
     .eq('id', userId)
     .maybeSingle();
-  const subscriptionPlan = (userRow as { subscription_plan?: string } | null)?.subscription_plan;
-  const isPro = subscriptionPlan === 'pro';
+  const isPro = (dbUser as { subscription_plan?: string } | null)?.subscription_plan === 'pro';
   console.log('Checking limit for user:', userId);
-  console.log('Current Plan found in DB:', subscriptionPlan ?? 'none');
+  console.log('Current Plan found in DB:', (dbUser as { subscription_plan?: string } | null)?.subscription_plan ?? 'none');
 
+  // 3. Check limits (only for free users)
   if (!isPro) {
     const { count } = await supabase
       .from('saved_ads')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId);
     if (count != null && count >= SAVE_LIMIT_FREE) {
-      return { ok: false, error: 'Upgrade to Pro for unlimited saves.' };
+      return { ok: false, error: 'LIMIT_REACHED' };
     }
   }
 
-  // Cast to 'any' to bypass strict type checking for saved_ads table
+  // 4. Save the ad (if passed checks)
   const { error } = await supabase
     .from('saved_ads')
     .insert({ user_id: userId, ad_id: adId } as any);

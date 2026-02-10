@@ -111,7 +111,7 @@ export function AdInsightModal({
       const result = await saveAdToVault(ad.id);
       if (!result.ok) {
         setIsSaved(false);
-        if (result.error?.toLowerCase().includes('upgrade')) {
+        if (result.error === 'LIMIT_REACHED' || result.error?.toLowerCase().includes('upgrade')) {
           setShowPricingModal(true);
         } else {
           toast.error(result.error ?? 'Could not save');
