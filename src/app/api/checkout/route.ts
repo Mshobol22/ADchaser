@@ -15,6 +15,7 @@ export async function POST() {
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
+  console.log('Initiating checkout for user:', userId);
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     line_items: [

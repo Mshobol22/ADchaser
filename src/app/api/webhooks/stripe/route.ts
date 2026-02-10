@@ -23,14 +23,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
+  console.log('Webhook Received:', event.type);
   if (event.type !== 'checkout.session.completed') {
     return NextResponse.json({ received: true }, { status: 200 });
   }
 
   const session = event.data.object as Stripe.Checkout.Session;
   const userId = session.metadata?.userId;
-  console.log('💰 Webhook received for session:', session.id);
-  console.log('👤 User ID from metadata:', userId);
+  console.log('Session Metadata:', session.metadata);
+  console.log('Target User ID:', userId);
   if (!userId) {
     console.error('❌ ERROR: No User ID in session metadata!');
     return NextResponse.json({ error: 'Missing userId in session metadata' }, { status: 400 });
@@ -42,8 +43,9 @@ export async function POST(req: Request) {
     publicMetadata: { isPro: true },
   });
 
-  // Store subscription in Supabase so dashboard header can read real status
+  // Store subscription in Supabase so dashboard header can read real status (SERVICE_ROLE bypasses RLS)
   const supabase = createServiceRoleClient();
+  console.log('Using SERVICE_ROLE client for Supabase users upsert');
   // Cast to 'any' to bypass strict type checking for the users table
   await supabase
     .from('users')

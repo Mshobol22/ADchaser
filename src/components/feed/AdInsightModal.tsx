@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import type { Ad } from '@/types/supabase';
 import { createClerkSupabaseClient } from '@/lib/supabaseClient';
 import { PricingModal } from '@/components/pricing/PricingModal';
+import { getIsPro, saveAdToVault } from '@/app/actions/saved-ads';
 
 /** Extended ad shape for insight modal (optional fields for future schema) */
 export type AdInsight = Ad & {
@@ -49,8 +50,19 @@ export function AdInsightModal({
   const router = useRouter();
   const [isSaved, setIsSaved] = useState(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
+  const [isProFromDB, setIsProFromDB] = useState(false);
 
-  const isPro = user?.publicMetadata?.isPro === true;
+  // Source of truth: subscription from Supabase users table (not Clerk)
+  useEffect(() => {
+    if (!open || !isSignedIn) return;
+    let cancelled = false;
+    getIsPro().then((isPro) => {
+      if (!cancelled) setIsProFromDB(isPro);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, isSignedIn]);
 
   // Check saved status when modal opens and user is signed in
   useEffect(() => {
@@ -91,21 +103,19 @@ export function AdInsightModal({
         .from('saved_ads')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId);
-      if (count !== null && count >= 3 && !isPro) {
+      if (count !== null && count >= 3 && !isProFromDB) {
         setShowPricingModal(true);
         return;
       }
-      setIsSaved(true); // optimistic after limit check
-      const { error } = await supabaseWithAuth
-        .from('saved_ads')
-        .insert({ user_id: userId, ad_id: ad.id } as any);
-      if (error) {
-        if (error.code === '23505') {
-          toast.success('Ad saved to Vault');
-          return;
-        }
+      setIsSaved(true); // optimistic
+      const result = await saveAdToVault(ad.id);
+      if (!result.ok) {
         setIsSaved(false);
-        toast.error(error.message ?? 'Could not save');
+        if (result.error?.toLowerCase().includes('upgrade')) {
+          setShowPricingModal(true);
+        } else {
+          toast.error(result.error ?? 'Could not save');
+        }
       } else {
         toast.success('Ad saved to Vault');
       }
@@ -126,7 +136,7 @@ export function AdInsightModal({
         toast.success('Removed from Vault');
       }
     }
-  }, [ad, isSignedIn, isSaved, router, getToken, user?.id, onRemovedFromVault, onRestoreToVault, isPro]);
+  }, [ad, isSignedIn, isSaved, router, getToken, user?.id, onRemovedFromVault, onRestoreToVault, isProFromDB]);
 
   if (!ad) return null;
 
