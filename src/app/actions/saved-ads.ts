@@ -1,17 +1,16 @@
 'use server';
 
 import { auth } from '@clerk/nextjs/server';
-import { createServerClient } from '@/lib/supabase';
+import { createServerClient, createServiceRoleClient } from '@/lib/supabase';
 import { revalidatePath } from 'next/cache';
 
+/** Read plan with service role so RLS cannot hide the row (e.g. Clerk JWT vs Supabase "authenticated"). */
 export async function getIsPro() {
-  const { userId, getToken } = await auth();
+  const { userId } = await auth();
   if (!userId) return false;
 
-  const token = await getToken({ template: 'supabase' });
-  const supabase = createServerClient(token ?? null);
-
-  const { data } = await supabase
+  const supabaseAdmin = createServiceRoleClient();
+  const { data } = await supabaseAdmin
     .from('users')
     .select('subscription_plan')
     .eq('id', userId)
@@ -27,8 +26,9 @@ export async function saveAdToVault(adId: string) {
   const token = await getToken({ template: 'supabase' });
   const supabase = createServerClient(token ?? null);
 
-  // 1. Check Real Pro Status (Single Source of Truth)
-  const { data: userData } = await supabase
+  // 1. Check Real Pro Status (service role so RLS cannot hide the row for Clerk users)
+  const supabaseAdmin = createServiceRoleClient();
+  const { data: userData } = await supabaseAdmin
     .from('users')
     .select('subscription_plan')
     .eq('id', userId)
