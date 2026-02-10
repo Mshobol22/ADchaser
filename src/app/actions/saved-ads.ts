@@ -1,118 +1,65 @@
 'use server';
 
 import { auth } from '@clerk/nextjs/server';
-import { createServerClient, createServiceRoleClient } from '@/lib/supabase';
-import type { Ad } from '@/types/supabase';
+import { createServerClient } from '@/lib/supabase';
+import { revalidatePath } from 'next/cache';
 
-const SAVE_LIMIT_FREE = 3;
-
-/** Source of truth: subscription from Supabase users table (not Clerk). Uses service role so RLS cannot hide the row. */
-export async function getIsPro(): Promise<boolean> {
-  const { getToken, userId } = await auth();
+export async function getIsPro() {
+  const { userId, getToken } = await auth();
   if (!userId) return false;
-  const supabaseAdmin = createServiceRoleClient();
-  const { data } = await supabaseAdmin
+
+  const token = await getToken({ template: 'supabase' });
+  const supabase = createServerClient(token ?? null);
+
+  const { data } = await supabase
     .from('users')
     .select('subscription_plan')
     .eq('id', userId)
     .maybeSingle();
-  const plan = (data as { subscription_plan?: string } | null)?.subscription_plan;
-  console.log('Checking limit for user:', userId);
-  console.log('Current Plan found in DB:', plan ?? 'none');
-  return plan === 'pro';
+
+  return (data as any)?.subscription_plan === 'pro';
 }
 
-export async function getSavedAds(): Promise<Ad[]> {
-  const { getToken, userId } = await auth();
-  if (!userId) return [];
-
-  const token = await getToken();
-  const supabase = createServerClient(token ?? null);
-  const { data: saved } = await supabase
-    .from('saved_ads')
-    .select('ad_id, created_at')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
-
-  // Cast 's' to 'any' to bypass strict type checking for saved_ads table
-  const adIds = saved?.map((s: any) => s.ad_id) ?? [];
-  if (adIds.length === 0) return [];
-
-  const { data: ads } = await supabase.from('ads').select('*').in('id', adIds);
-  const list = ads ?? [];
-  const orderMap = new Map(adIds.map((id, i) => [id, i]));
-  // Cast a and b to 'any' to fix the Vercel build error
-  return list.slice().sort((a: any, b: any) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
-}
-
-export async function checkSavedAd(adId: string): Promise<boolean> {
-  const { getToken } = await auth();
-  const token = await getToken();
-  if (!token) return false;
-
-  const supabase = createServerClient(token);
-  const { data } = await supabase
-    .from('saved_ads')
-    .select('id')
-    .eq('ad_id', adId)
-    .maybeSingle();
-  return !!data;
-}
-
-export async function saveAdToVault(adId: string): Promise<{ ok: boolean; error?: string }> {
-  // 1. Get the user (Clerk – this app does not use Supabase Auth)
-  const { getToken, userId } = await auth();
+export async function saveAdToVault(adId: string) {
+  const { userId, getToken } = await auth();
   if (!userId) return { ok: false, error: 'Unauthorized' };
 
   const token = await getToken({ template: 'supabase' });
   const supabase = createServerClient(token ?? null);
 
-  // 2. Fetch the REAL plan from DB (service role so RLS cannot hide Pro status)
-  const supabaseAdmin = createServiceRoleClient();
-  const { data: dbUser } = await supabaseAdmin
+  // 1. Check Real Pro Status (Single Source of Truth)
+  const { data: userData } = await supabase
     .from('users')
     .select('subscription_plan')
     .eq('id', userId)
     .maybeSingle();
-  const isPro = (dbUser as { subscription_plan?: string } | null)?.subscription_plan === 'pro';
-  console.log('Checking limit for user:', userId);
-  console.log('Current Plan found in DB:', (dbUser as { subscription_plan?: string } | null)?.subscription_plan ?? 'none');
 
-  // 3. Check limits (only for free users)
+  const isPro = (userData as any)?.subscription_plan === 'pro';
+  console.log(`[SaveAd] User: ${userId} | Plan: ${isPro ? 'PRO' : 'FREE'}`);
+
+  // 2. Enforce Limits (ONLY if not Pro)
   if (!isPro) {
     const { count } = await supabase
       .from('saved_ads')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId);
-    if (count != null && count >= SAVE_LIMIT_FREE) {
+
+    if (count !== null && count >= 3) {
+      console.log('[SaveAd] Limit Reached for Free User');
       return { ok: false, error: 'LIMIT_REACHED' };
     }
   }
 
-  // 4. Save the ad (if passed checks)
+  // 3. Perform Save
   const { error } = await supabase
     .from('saved_ads')
     .insert({ user_id: userId, ad_id: adId } as any);
 
   if (error) {
-    if (error.code === '23505') return { ok: true }; // unique violation = already saved
+    if (error.code === '23505') return { ok: true, message: 'Already saved' };
     return { ok: false, error: error.message };
   }
-  return { ok: true };
-}
 
-export async function removeAdFromVault(adId: string): Promise<{ ok: boolean; error?: string }> {
-  const { getToken, userId } = await auth();
-  if (!userId) return { ok: false, error: 'Not signed in' };
-
-  const token = await getToken();
-  const supabase = createServerClient(token ?? null);
-  const { error } = await supabase
-    .from('saved_ads')
-    .delete()
-    .eq('user_id', userId)
-    .eq('ad_id', adId);
-
-  if (error) return { ok: false, error: error.message };
+  revalidatePath('/dashboard');
   return { ok: true };
 }

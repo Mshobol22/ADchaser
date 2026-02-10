@@ -80,36 +80,34 @@ export function AdInsightModal({
       router.push('/sign-up');
       return;
     }
-    const token = await getToken({ template: 'supabase' });
-    const supabaseWithAuth = createClerkSupabaseClient(token);
     const nextSaved = !isSaved;
-
     if (nextSaved) {
-      setIsSaved(true); // optimistic
+      setIsSaved(true);
+      toast.success('Ad saved to Vault');
       const result = await saveAdToVault(ad.id);
       if (!result.ok) {
-        setIsSaved(false);
-        if (result.error === 'LIMIT_REACHED' || result.error?.toLowerCase().includes('upgrade')) {
+        if (result.error === 'LIMIT_REACHED') {
+          setIsSaved(false);
           setShowPricingModal(true);
         } else {
+          setIsSaved(false);
           toast.error(result.error ?? 'Could not save');
         }
-      } else {
-        toast.success('Ad saved to Vault');
       }
     } else {
-      setIsSaved(false); // optimistic for remove
+      setIsSaved(false);
       onRemovedFromVault?.(ad.id);
-      const userId = user?.id ?? '';
+      const token = await getToken({ template: 'supabase' });
+      const supabaseWithAuth = createClerkSupabaseClient(token);
       const { error } = await supabaseWithAuth
         .from('saved_ads')
         .delete()
-        .eq('user_id', userId)
+        .eq('user_id', user?.id ?? '')
         .eq('ad_id', ad.id);
       if (error) {
         setIsSaved(true);
         onRestoreToVault?.(ad);
-        toast.error(error.message ?? 'Could not remove');
+        toast.error(error.message);
       } else {
         toast.success('Removed from Vault');
       }
