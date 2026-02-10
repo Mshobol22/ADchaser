@@ -24,6 +24,7 @@ export function SuccessHandler() {
 
     (async () => {
       if (user) await user.reload();
+      router.refresh();
       toast.success('Welcome to Pro! You now have unlimited access.');
       confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
       setTimeout(() => {

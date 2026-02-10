@@ -100,7 +100,7 @@ export function AdCard({ ad, onSelect }: { ad: Ad; onSelect?: () => void }) {
       {/* Glass overlay: brand + headline */}
       <div className="absolute inset-x-0 bottom-0 bg-black/40 p-3 backdrop-blur-md">
         {isBrandFallback ? (
-          <span className="inline-block max-w-full truncate rounded px-1.5 py-0.5 text-xs font-medium text-slate-400">
+          <span className="inline-block max-w-full truncate rounded bg-slate-600/60 px-2 py-1 text-xs font-medium text-slate-400">
             {displayBrand}
           </span>
         ) : (

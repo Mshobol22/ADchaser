@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
-import { Bookmark } from 'lucide-react';
+import { ArrowLeft, Bookmark } from 'lucide-react';
 import { fetchSavedAds } from '@/app/actions/fetchSavedAds';
 import { SuccessHandler } from '@/app/dashboard/SuccessHandler';
 import { VaultWithModal } from '@/app/dashboard/VaultWithModal';
@@ -29,15 +29,15 @@ export default async function DashboardPage() {
             >
               My Swipe File
             </h1>
-            <p className="text-sm text-slate-500">Your personal collection of high-converting creatives.</p>
+            <p className="text-sm text-slate-400">Your personal collection of high-converting creatives.</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-400">
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-300">
               {count} {count === 1 ? 'Ad' : 'Ads'} Saved
             </span>
             <Link
               href="/"
-              className="text-sm font-medium text-slate-400 transition hover:text-white"
+              className="text-sm font-medium text-zinc-200 transition hover:text-emerald-400"
             >
               Library
             </Link>
@@ -47,12 +47,19 @@ export default async function DashboardPage() {
       </header>
 
       <main className="px-4 py-8 sm:px-6 lg:px-8">
+        <Link
+          href="/"
+          className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-zinc-200 transition hover:text-emerald-400"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          Back to Feed
+        </Link>
         {savedAds.length === 0 ? (
           <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-white/5">
-              <Bookmark className="h-8 w-8 text-slate-500" aria-hidden />
+              <Bookmark className="h-8 w-8 text-slate-400" aria-hidden />
             </div>
-            <p className="text-lg text-slate-400">Your vault is empty.</p>
+            <p className="text-lg text-slate-300">Your vault is empty.</p>
             <Link
               href="/"
               className="cursor-pointer rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-medium text-white backdrop-blur-md transition hover:border-white/30 hover:bg-white/15"

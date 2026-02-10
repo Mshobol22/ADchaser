@@ -26,9 +26,29 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+const siteUrl = "https://a-dchaser.vercel.app";
+
 export const metadata: Metadata = {
-  title: "ADchaser Library",
-  description: "Ad gallery and library",
+  metadataBase: new URL(siteUrl),
+  title: "ADchaser | The TikTok Ad Spy Tool",
+  description:
+    "Save, organize, and analyze winning TikTok ads in seconds. The #1 tool for dropshippers and marketers.",
+  openGraph: {
+    title: "ADchaser | The TikTok Ad Spy Tool",
+    description:
+      "Save, organize, and analyze winning TikTok ads in seconds. The #1 tool for dropshippers and marketers.",
+    url: siteUrl,
+    siteName: "ADchaser",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ADchaser | The TikTok Ad Spy Tool",
+    description:
+      "Save, organize, and analyze winning TikTok ads in seconds. The #1 tool for dropshippers and marketers.",
+    creator: "@yourhandle",
+  },
 };
 
 export default function RootLayout({
