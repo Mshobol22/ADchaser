@@ -44,13 +44,19 @@ export async function POST(req: Request) {
   });
 
   // Store subscription in Supabase so dashboard header can read real status (SERVICE_ROLE bypasses RLS)
+  const userEmail = session.customer_details?.email ?? session.customer_email ?? undefined;
   const supabase = createServiceRoleClient();
   console.log('Using SERVICE_ROLE client for Supabase users upsert');
   // Cast to 'any' to bypass strict type checking for the users table
   await supabase
     .from('users')
     .upsert(
-      { id: userId, subscription_plan: 'pro', updated_at: new Date().toISOString() } as any,
+      {
+        id: userId,
+        email: userEmail,
+        subscription_plan: 'pro',
+        updated_at: new Date().toISOString(),
+      } as any,
       { onConflict: 'id' }
     );
 
