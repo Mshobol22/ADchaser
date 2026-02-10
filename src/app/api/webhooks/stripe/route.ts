@@ -41,10 +41,11 @@ export async function POST(req: Request) {
 
   // Store subscription in Supabase so dashboard header can read real status
   const supabase = createServiceRoleClient();
+  // Cast to 'any' to bypass strict type checking for the users table
   await supabase
     .from('users')
     .upsert(
-      { id: userId, subscription_plan: 'pro', updated_at: new Date().toISOString() },
+      { id: userId, subscription_plan: 'pro', updated_at: new Date().toISOString() } as any,
       { onConflict: 'id' }
     );
 
