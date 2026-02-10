@@ -5,12 +5,12 @@ import Stripe from 'stripe';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST() {
-  const { userId } = await auth();
+  const user = await currentUser();
+  const userId = user?.id ?? (await auth()).userId;
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const user = await currentUser();
   const userEmail = user?.primaryEmailAddress?.emailAddress ?? undefined;
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
@@ -32,6 +32,7 @@ export async function POST() {
         quantity: 1,
       },
     ],
+    // CRITICAL: webhook uses this to update Clerk + Supabase for the paying user
     metadata: {
       userId,
     },

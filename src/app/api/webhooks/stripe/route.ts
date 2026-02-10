@@ -29,7 +29,10 @@ export async function POST(req: Request) {
 
   const session = event.data.object as Stripe.Checkout.Session;
   const userId = session.metadata?.userId;
+  console.log('💰 Webhook received for session:', session.id);
+  console.log('👤 User ID from metadata:', userId);
   if (!userId) {
+    console.error('❌ ERROR: No User ID in session metadata!');
     return NextResponse.json({ error: 'Missing userId in session metadata' }, { status: 400 });
   }
 
