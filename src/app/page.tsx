@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@/lib/supabase';
+import type { Ad } from '@/types/supabase';
 import { HeroSection } from '@/components/hero/HeroSection';
 import { LibraryWithModal } from '@/components/feed/LibraryWithModal';
 import { Footer } from '@/components/layout/Footer';
@@ -8,7 +9,8 @@ import { NavAuth } from '@/components/layout/NavAuth';
 export default async function Home() {
   const { userId } = await auth();
   const supabase = createClient();
-  const { data: ads = [] } = await supabase.from('ads').select('*').order('created_at', { ascending: false });
+  const { data } = await supabase.from('ads').select('*').order('created_at', { ascending: false });
+  const ads: Ad[] = (data ?? []) as Ad[];
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
