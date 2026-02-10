@@ -20,7 +20,8 @@ export default async function DashboardPage() {
     .select('subscription_plan')
     .eq('id', userId)
     .maybeSingle();
-  const isPro = userData?.subscription_plan === 'pro';
+  // Cast to bypass strict inference (Supabase return type can infer as 'never' for users table)
+  const isPro = (userData as { subscription_plan?: string } | null)?.subscription_plan === 'pro';
 
   const savedAds = await fetchSavedAds();
   const count = savedAds.length;
