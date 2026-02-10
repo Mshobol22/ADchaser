@@ -7,8 +7,10 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  TooltipProps,
 } from 'recharts';
+
+type TooltipPayloadItem = { value?: number };
+type CustomTooltipProps = { active?: boolean; payload?: TooltipPayloadItem[] };
 
 const MOCK_DATA = [
   { day: 1, score: 52 }, { day: 2, score: 61 }, { day: 3, score: 58 }, { day: 4, score: 72 },
@@ -25,7 +27,7 @@ const EMERALD_500 = '#10b981';
 const EMERALD_900 = '#064e3b';
 const EMERALD_400 = '#34d399';
 
-function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
+function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   const value = payload[0]?.value ?? 0;
   return (
