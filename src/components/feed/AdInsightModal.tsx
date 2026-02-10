@@ -98,7 +98,7 @@ export function AdInsightModal({
       setIsSaved(true); // optimistic after limit check
       const { error } = await supabaseWithAuth
         .from('saved_ads')
-        .insert({ user_id: userId, ad_id: ad.id });
+        .insert({ user_id: userId, ad_id: ad.id } as any);
       if (error) {
         if (error.code === '23505') {
           toast.success('Ad saved to Vault');
