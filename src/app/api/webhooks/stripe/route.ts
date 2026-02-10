@@ -32,6 +32,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Missing userId in session metadata' }, { status: 400 });
   }
 
+  // Sync with Clerk metadata so the frontend (Pro badge, limits) updates instantly
   const client = await clerkClient();
   await client.users.updateUserMetadata(userId, {
     publicMetadata: { isPro: true },
