@@ -7,6 +7,10 @@ export default function SignUpPage() {
       <div className="flex w-full max-w-md justify-center">
         <SignUp
           forceRedirectUrl="/"
+          signInUrl="/sign-in"
+          afterSignUpUrl="/"
+          termsPageUrl="/terms"
+          privacyPageUrl="/privacy"
           appearance={{
             elements: {
               rootBox: 'mx-auto',

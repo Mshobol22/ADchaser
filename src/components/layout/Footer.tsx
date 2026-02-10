@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export function Footer() {
   return (
     <footer className="mt-24 border-t border-white/10 py-8">
@@ -6,12 +8,12 @@ export function Footer() {
           © {new Date().getFullYear()} ADchaser. All rights reserved.
         </p>
         <nav className="flex gap-6 text-sm text-slate-500">
-          <a href="#" className="transition hover:text-white">
+          <Link href="/privacy" className="transition hover:text-white">
             Privacy
-          </a>
-          <a href="#" className="transition hover:text-white">
+          </Link>
+          <Link href="/terms" className="transition hover:text-white">
             Terms
-          </a>
+          </Link>
         </nav>
       </div>
     </footer>
