@@ -47,6 +47,7 @@ export async function saveAdToVault(adId: string): Promise<{ ok: boolean; error?
 
   const token = await getToken();
   const supabase = createServerClient(token ?? null);
+  // Cast to 'any' to bypass strict type checking for saved_ads table
   const { error } = await supabase
     .from('saved_ads')
     .insert({ user_id: userId, ad_id: adId } as any);
