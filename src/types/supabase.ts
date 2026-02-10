@@ -24,6 +24,12 @@ export interface SavedAd {
   created_at: string;
 }
 
+export interface User {
+  id: string;
+  subscription_plan: string;
+  updated_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -36,6 +42,11 @@ export interface Database {
         Row: SavedAd;
         Insert: Omit<SavedAd, 'id' | 'created_at'> & { id?: string; created_at?: string };
         Update: Partial<Omit<SavedAd, 'id'>>;
+      };
+      users: {
+        Row: User;
+        Insert: Omit<User, 'updated_at'> & { updated_at?: string };
+        Update: Partial<Omit<User, 'id'>>;
       };
     };
   };

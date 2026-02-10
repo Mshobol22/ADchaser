@@ -7,10 +7,20 @@ import { SuccessHandler } from '@/app/dashboard/SuccessHandler';
 import { VaultWithModal } from '@/app/dashboard/VaultWithModal';
 import { NavAuth } from '@/components/layout/NavAuth';
 import { auth } from '@clerk/nextjs/server';
+import { createServerClient } from '@/lib/supabase';
 
 export default async function DashboardPage() {
-  const { userId } = await auth();
+  const { userId, getToken } = await auth();
   if (!userId) redirect('/sign-in');
+
+  const token = await getToken({ template: 'supabase' });
+  const supabase = createServerClient(token ?? null);
+  const { data: userData } = await supabase
+    .from('users')
+    .select('subscription_plan')
+    .eq('id', userId)
+    .maybeSingle();
+  const isPro = userData?.subscription_plan === 'pro';
 
   const savedAds = await fetchSavedAds();
   const count = savedAds.length;
@@ -41,6 +51,11 @@ export default async function DashboardPage() {
             >
               Library
             </Link>
+            {isPro && (
+              <span className="ml-2 rounded-full bg-amber-400 px-2 py-0.5 text-xs font-bold text-black">
+                PRO
+              </span>
+            )}
             <NavAuth isSignedIn={!!userId} />
           </div>
         </div>

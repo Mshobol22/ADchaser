@@ -2,6 +2,7 @@ import { clerkClient } from '@clerk/nextjs/server';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { createServiceRoleClient } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,6 +38,15 @@ export async function POST(req: Request) {
   await client.users.updateUserMetadata(userId, {
     publicMetadata: { isPro: true },
   });
+
+  // Store subscription in Supabase so dashboard header can read real status
+  const supabase = createServiceRoleClient();
+  await supabase
+    .from('users')
+    .upsert(
+      { id: userId, subscription_plan: 'pro', updated_at: new Date().toISOString() },
+      { onConflict: 'id' }
+    );
 
   return NextResponse.json({ received: true }, { status: 200 });
 }
